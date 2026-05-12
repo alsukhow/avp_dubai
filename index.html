@@ -2354,27 +2354,27 @@ function renderVendorTable(allVendors) {
   const bodyHtml = pageRows.map((v, i) => {
     const expandedClass = state.vendorExpanded === v.name ? ' style="background:var(--surface-alt)"' : '';
     const expanded = state.vendorExpanded === v.name ? `
-      <tr class="subrow"><td colspan="${head.length}">
-        <div class="subrow-inner">
-          <table>
-            <thead><tr>
-              <th>Date</th><th>Category</th><th>Project</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th>Invoice</th><th>Subcategory</th>
-            </tr></thead>
-            <tbody>${v.txs.sort((a,b)=>b.date-a.date).map(t => `
-              <tr>
-                <td>${formatDate(t.date)}</td>
-                <td>${escapeHtml(t.type)}</td>
-                <td><span class="badge ${t.project.toLowerCase()}">${escapeHtml(t.project)}</span></td>
-                <td class="numeric neg">${t.debit < 0 ? formatAED(t.debit) : ''}</td>
-                <td class="numeric pos">${t.credit > 0 ? formatAED(t.credit) : ''}</td>
-                <td>${escapeHtml(t.invoice)}</td>
-                <td class="muted">${escapeHtml(t.remarks)}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      </td></tr>
-    ` : '';
+  <tr class="subrow"><td colspan="${head.length}">
+    <div class="subrow-inner">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Category</th><th>Project</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th>Subcategory</th><th>Comments</th>
+        </tr></thead>
+        <tbody>${v.txs.sort((a,b)=>b.date-a.date).map(t => `
+          <tr>
+            <td>${formatDate(t.date)}</td>
+            <td>${escapeHtml(t.type)}</td>
+            <td><span class="badge ${t.project.toLowerCase()}">${escapeHtml(t.project)}</span></td>
+            <td class="numeric neg">${t.debit < 0 ? formatAED(t.debit) : ''}</td>
+            <td class="numeric pos">${t.credit > 0 ? formatAED(t.credit) : ''}</td>
+            <td class="muted">${escapeHtml(t.remarks)}</td>
+            <td class="muted">${escapeHtml(t.comments)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </td></tr>
+` : '';
     return `
       <tr data-vendor="${escapeAttr(v.name)}"${expandedClass}>
         <td>${escapeHtml(v.name)}</td>
