@@ -1346,15 +1346,16 @@ function updateHeaderMeta() {
     const to = formatMonthLabel(state.monthsAvailable[state.monthsAvailable.length - 1]);
     document.getElementById('meta-period').textContent = `${from} – ${to}`;
   }
-}
-   const reconEl = document.getElementById('recon-indicator');
-if (reconEl && state.recon) {
-  if (state.recon.ok) {
-    reconEl.innerHTML = '<span style="color:#86efac">● OK</span>';
-    reconEl.title = 'All rows reconcile against Running Balance';
-  } else {
-    reconEl.innerHTML = `<span style="color:#fca5a5">● ${state.recon.mismatches.length} issue${state.recon.mismatches.length > 1 ? 's' : ''}</span>`;
-    reconEl.title = `Max diff: AED ${state.recon.maxDiff.toFixed(2)}. See console for details.`;
+
+  const reconEl = document.getElementById('recon-indicator');
+  if (reconEl && state.recon) {
+    if (state.recon.ok) {
+      reconEl.innerHTML = '<span style="color:#86efac">● OK</span>';
+      reconEl.title = 'All rows reconcile against Running Balance';
+    } else {
+      reconEl.innerHTML = `<span style="color:#fca5a5">● ${state.recon.mismatches.length} issue${state.recon.mismatches.length > 1 ? 's' : ''}</span>`;
+      reconEl.title = `Max diff: AED ${state.recon.maxDiff.toFixed(2)}. See console for details.`;
+    }
   }
 }
 
