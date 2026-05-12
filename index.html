@@ -692,6 +692,21 @@ table.data-table {
   .kpi-grid { grid-template-columns: 1fr; }
 }
 /* ===== CASH P&L TABLE ===== */
+.unit-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface-alt);
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-left: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  border: 1px solid var(--border);
+}
 .cash-pl { font-size: 12px; }
 .cash-pl th {
   padding: 10px 12px;
@@ -1961,8 +1976,8 @@ function renderCashFlow(rows) {
 
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title">Cash P&amp;L by Project</div>
-        <div class="panel-sub">Click any project row under Total Outflows to drill into subcategory detail</div>
+        <div class="panel-title">Cash P&amp;L by Project <span class="unit-badge">in AED</span></div>
+<div class="panel-sub">Click any project row under Total Outflows to drill into subcategory detail</div>
       </div>
       <div id="cash-pl-table"></div>
     </div>
@@ -2137,11 +2152,12 @@ function renderCashPLTable(rows, container) {
   const data = computeCashPL(rows, monthKeys);
   const sum = arr => arr.reduce((s, v) => s + v, 0);
 
-  const cell = (v, cls = '') => v === 0
-    ? `<td class="numeric ${cls}">—</td>`
-    : `<td class="numeric ${cls}" title="${formatAED(v)}">${formatAEDShort(v)}</td>`;
-  const cellTotal = (v, cls = '') =>
-    `<td class="numeric total-col ${cls}">${v === 0 ? '—' : formatAED(v)}</td>`;
+  const stripAED = s => s.replace(/^AED\s*/, '');
+const cell = (v, cls = '') => v === 0
+  ? `<td class="numeric ${cls}">—</td>`
+  : `<td class="numeric ${cls}" title="${formatAED(v)}">${stripAED(formatAEDShort(v))}</td>`;
+const cellTotal = (v, cls = '') =>
+  `<td class="numeric total-col ${cls}">${v === 0 ? '—' : stripAED(formatAED(v))}</td>`;
 
   const headerHtml = `
     <th class="row-label-col">Item</th>
@@ -2216,10 +2232,10 @@ function renderCashPLTable(rows, container) {
     <tr class="pl-section-row pl-section-net">
       <td class="row-label-col">Net Cash Flow</td>
       ${netByMonth.map(v => {
-        const cls = v > 0 ? 'pl-net-pos' : v < 0 ? 'pl-net-neg' : '';
-        return `<td class="numeric ${cls}" title="${formatAED(v)}">${v === 0 ? '—' : formatAEDShort(v)}</td>`;
-      }).join('')}
-      <td class="numeric total-col ${netTotal >= 0 ? 'pl-net-pos' : 'pl-net-neg'}">${formatAED(netTotal)}</td>
+  const cls = v > 0 ? 'pl-net-pos' : v < 0 ? 'pl-net-neg' : '';
+  return `<td class="numeric ${cls}" title="${formatAED(v)}">${v === 0 ? '—' : stripAED(formatAEDShort(v))}</td>`;
+}).join('')}
+<td class="numeric total-col ${netTotal >= 0 ? 'pl-net-pos' : 'pl-net-neg'}">${stripAED(formatAED(netTotal))}</td>
     </tr>
   `;
 
