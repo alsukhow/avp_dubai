@@ -1694,6 +1694,66 @@ function renderOutflowsByRemarkChart(id, rows) {
   });
 }
 
+function renderOutflowsByVendorChart(id, rows) {
+  // Aggregate outflows by vendor
+  const agg = new Map();
+  rows.forEach(r => {
+    if (r.debit >= 0) return;
+    const name = (r.vendor || '').trim() || '(no vendor)';
+    agg.set(name, (agg.get(name) || 0) + Math.abs(r.debit));
+  });
+  const sorted = Array.from(agg.entries()).sort((a, b) => b[1] - a[1]);
+
+  const TOP_N = 10;
+  let display;
+  if (sorted.length > TOP_N) {
+    const top = sorted.slice(0, TOP_N);
+    const otherSum = sorted.slice(TOP_N).reduce((s, [, v]) => s + v, 0);
+    display = [...top, ['Other', otherSum]];
+  } else {
+    display = sorted;
+  }
+
+  const totalOut = display.reduce((s, [, v]) => s + v, 0);
+
+  createChart(id, {
+    type: 'bar',
+    data: {
+      labels: display.map(([k]) => k.length > 32 ? k.slice(0, 30) + '…' : k),
+      datasets: [{
+        label: 'Outflows',
+        data: display.map(([, v]) => v),
+        backgroundColor: display.map(([k]) => k === 'Other' ? '#9CA3AF' : '#991B1B'),
+        borderRadius: 3,
+        barThickness: 'flex',
+        maxBarThickness: 28
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const value = ctx.parsed.x;
+              const pct = totalOut > 0 ? (value / totalOut * 100).toFixed(1) : '0';
+              return `${formatAED(value)} (${pct}% of period outflows)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { callback: v => formatAED(v, { compact: true }) },
+          grid: { color: '#E7E4DC' }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+   
 function renderOverviewInsights(rows, monthKeys) {
   const container = document.getElementById('overview-insights');
   const insights = [];
