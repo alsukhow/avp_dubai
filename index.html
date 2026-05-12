@@ -691,6 +691,118 @@ table.data-table {
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
 }
+/* ===== CASH P&L TABLE ===== */
+.cash-pl { font-size: 12px; }
+.cash-pl th {
+  padding: 10px 12px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.cash-pl td {
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+/* Sticky first column so labels stay visible during horizontal scroll */
+.cash-pl .row-label-col {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  min-width: 170px;
+  text-align: left;
+}
+.cash-pl th.row-label-col {
+  background: var(--surface-alt);
+  z-index: 2;
+}
+
+.cash-pl .indent { display: inline-block; width: 18px; }
+.cash-pl .sub-indent { display: inline-block; width: 32px; }
+.cash-pl .sub-label {
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* Section header rows (Total Inflows / Total Outflows / Net) */
+.cash-pl .pl-section-row td {
+  font-weight: 600;
+  font-size: 12px;
+  border-top: 1px solid var(--border-strong);
+}
+.cash-pl .pl-section-row .row-label-col {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+.cash-pl .pl-section-inflows td,
+.cash-pl .pl-section-inflows .row-label-col {
+  background: #F0F9F0 !important;
+}
+.cash-pl .pl-section-outflows td,
+.cash-pl .pl-section-outflows .row-label-col {
+  background: var(--accent-soft) !important;
+}
+.cash-pl .pl-section-net td,
+.cash-pl .pl-section-net .row-label-col {
+  background: var(--header-bg) !important;
+  color: var(--header-text);
+  border-top: 2px solid var(--accent);
+}
+.cash-pl .pl-section-net .pl-net-pos { color: #86efac; }
+.cash-pl .pl-section-net .pl-net-neg { color: #fca5a5; }
+
+/* Detail rows (per-project under section) */
+.cash-pl .pl-detail-row td {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.cash-pl .pl-detail-row.pl-expandable { cursor: pointer; }
+.cash-pl .pl-detail-row.pl-expandable:hover td,
+.cash-pl .pl-detail-row.pl-expandable:hover .row-label-col {
+  background: var(--surface-alt);
+}
+
+/* Sub rows (subcategory drill-down under project) */
+.cash-pl .pl-sub-row td,
+.cash-pl .pl-sub-row .row-label-col {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: rgba(231, 228, 220, 0.45);
+}
+
+/* Expand chevron */
+.cash-pl .expand-toggle {
+  display: inline-block;
+  width: 12px;
+  transition: transform 0.15s;
+  color: var(--text-muted);
+  margin-right: 6px;
+  user-select: none;
+  font-size: 9px;
+}
+.cash-pl .expand-toggle.open { transform: rotate(90deg); }
+
+/* Total column emphasis */
+.cash-pl .total-col {
+  background: var(--surface-alt);
+  font-weight: 600;
+  border-left: 2px solid var(--border-strong);
+}
+.cash-pl .pl-section-row .total-col {
+  background: var(--border) !important;
+}
+.cash-pl .pl-section-net .total-col {
+  background: #1F2933 !important;
+  color: var(--header-text);
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .cash-pl th, .cash-pl td { padding: 7px 9px; }
+  .cash-pl .row-label-col { min-width: 130px; }
+}
 </style>
 </head>
 <body>
@@ -879,7 +991,8 @@ const state = {
   txSearch: '',
   txSort: { key: 'date', dir: 'desc' },
   projectsView: 'all',
-  filterDebounceTimer: null
+cashPLExpanded: new Set(),
+filterDebounceTimer: null
 };
 
 const PROJECT_LABELS = {
@@ -946,6 +1059,12 @@ function formatMonthLabel(monthKey) {
   const [y, m] = monthKey.split('-');
   const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${names[parseInt(m) - 1]} ${y}`;
+}
+function formatMonthCompact(monthKey) {
+  // "2025-10" -> "Oct-25"
+  const [y, m] = monthKey.split('-');
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${names[parseInt(m) - 1]}-${y.slice(2)}`;
 }
 function formatDate(d) {
   if (!d) return '—';
@@ -1822,7 +1941,7 @@ function renderCashFlow(rows) {
 
   el.innerHTML = `
     <div class="section-title">Cash Flow</div>
-    <div class="section-sub">Running balance, monthly waterfall, and trend</div>
+    <div class="section-sub">Running balance, monthly waterfall, and project-level cash P&amp;L</div>
 
     <div class="panel">
       <div class="panel-header">
@@ -1832,27 +1951,26 @@ function renderCashFlow(rows) {
       <div class="chart-wrap tall"><canvas id="chart-running"></canvas></div>
     </div>
 
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title">Monthly Net Flow</div>
-          <div class="panel-sub">Inflows − Outflows</div>
-        </div>
-        <div class="chart-wrap"><canvas id="chart-netflow"></canvas></div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Monthly Summary</div>
+        <div class="panel-sub">Opening · Inflows · Outflows · Net · Closing</div>
       </div>
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title">Monthly Summary</div>
-          <div class="panel-sub">Waterfall logic</div>
-        </div>
-        <div id="monthly-summary-table"></div>
+      <div id="monthly-summary-table"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Cash P&amp;L by Project</div>
+        <div class="panel-sub">Click any project row under Total Outflows to drill into subcategory detail</div>
       </div>
+      <div id="cash-pl-table"></div>
     </div>
   `;
 
   renderRunningBalanceChart('chart-running', rows);
-  renderNetFlowChart('chart-netflow', rows);
   renderMonthlySummaryTable(rows, document.getElementById('monthly-summary-table'));
+  renderCashPLTable(rows, document.getElementById('cash-pl-table'));
 }
 
 function renderRunningBalanceChart(id, rows) {
@@ -1926,29 +2044,6 @@ function renderRunningBalanceChart(id, rows) {
   });
 }
 
-function renderNetFlowChart(id, rows) {
-  const monthKeys = monthsInRange(state.filters.monthFrom, state.filters.monthTo);
-  const byMonth = groupBy(rows, r => r.monthKey);
-  const net = monthKeys.map(mk => netFlow(byMonth.get(mk) || []));
-  const colors = net.map(v => v >= 0 ? '#166534' : '#991B1B');
-
-  createChart(id, {
-    type: 'bar',
-    data: {
-      labels: monthKeys.map(formatMonthLabel),
-      datasets: [{ label: 'Net flow', data: net, backgroundColor: colors, borderRadius: 4 }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        y: {
-          ticks: { callback: v => formatAED(v, { compact: true }) }
-        }
-      }
-    }
-  });
-}
-
 function renderMonthlySummaryTable(rows, container) {
   const monthKeys = monthsInRange(state.filters.monthFrom, state.filters.monthTo);
   const byMonth = groupBy(rows, r => r.monthKey);
@@ -1988,7 +2083,168 @@ function renderMonthlySummaryTable(rows, container) {
     </div>
   `;
 }
+// ============================================================
+// CASH P&L BY PROJECT (with expandable subcategory drill-down)
+// ============================================================
+function computeCashPL(rows, monthKeys) {
+  const monthIdx = new Map(monthKeys.map((mk, i) => [mk, i]));
+  const inflowsByProject = {};
+  const outflowsByProject = {};
+  const outflowsBySubByProject = {};
 
+  PROJECT_ORDER.forEach(p => {
+    inflowsByProject[p] = monthKeys.map(() => 0);
+    outflowsByProject[p] = monthKeys.map(() => 0);
+    outflowsBySubByProject[p] = new Map();
+  });
+
+  rows.forEach(r => {
+    const idx = monthIdx.get(r.monthKey);
+    if (idx == null) return;
+    if (!PROJECT_ORDER.includes(r.project)) return;
+
+    if (r.credit > 0) {
+      inflowsByProject[r.project][idx] += r.credit;
+    }
+    if (r.debit < 0) {
+      const out = Math.abs(r.debit);
+      outflowsByProject[r.project][idx] += out;
+      let sub = (r.remarks || '').trim();
+      if (sub === '' || sub === '--' || sub === '-') sub = 'Uncategorized';
+      const subMap = outflowsBySubByProject[r.project];
+      if (!subMap.has(sub)) subMap.set(sub, monthKeys.map(() => 0));
+      subMap.get(sub)[idx] += out;
+    }
+  });
+
+  const inflowsTotal = monthKeys.map((_, i) =>
+    PROJECT_ORDER.reduce((s, p) => s + inflowsByProject[p][i], 0)
+  );
+  const outflowsTotal = monthKeys.map((_, i) =>
+    PROJECT_ORDER.reduce((s, p) => s + outflowsByProject[p][i], 0)
+  );
+
+  return { inflowsByProject, outflowsByProject, outflowsBySubByProject, inflowsTotal, outflowsTotal };
+}
+
+function renderCashPLTable(rows, container) {
+  const monthKeys = monthsInRange(state.filters.monthFrom, state.filters.monthTo);
+  if (monthKeys.length === 0 || rows.length === 0) {
+    container.innerHTML = '<div style="padding:24px;color:var(--text-muted);text-align:center">No data for selected period</div>';
+    return;
+  }
+
+  const data = computeCashPL(rows, monthKeys);
+  const sum = arr => arr.reduce((s, v) => s + v, 0);
+
+  const cell = (v, cls = '') => v === 0
+    ? `<td class="numeric ${cls}">—</td>`
+    : `<td class="numeric ${cls}" title="${formatAED(v)}">${formatAEDShort(v)}</td>`;
+  const cellTotal = (v, cls = '') =>
+    `<td class="numeric total-col ${cls}">${v === 0 ? '—' : formatAED(v)}</td>`;
+
+  const headerHtml = `
+    <th class="row-label-col">Item</th>
+    ${monthKeys.map(mk => `<th class="numeric">${formatMonthCompact(mk)}</th>`).join('')}
+    <th class="numeric total-col">Total</th>
+  `;
+
+  const inflowsRows = `
+    <tr class="pl-section-row pl-section-inflows">
+      <td class="row-label-col">Total Inflows</td>
+      ${data.inflowsTotal.map(v => cell(v, 'pos')).join('')}
+      ${cellTotal(sum(data.inflowsTotal), 'pos')}
+    </tr>
+    ${PROJECT_ORDER.map(p => `
+      <tr class="pl-detail-row">
+        <td class="row-label-col">
+          <span class="indent"></span>
+          <span class="badge ${p.toLowerCase()}">${p}</span>
+        </td>
+        ${data.inflowsByProject[p].map(v => cell(v)).join('')}
+        ${cellTotal(sum(data.inflowsByProject[p]))}
+      </tr>
+    `).join('')}
+  `;
+
+  const outflowsRows = `
+    <tr class="pl-section-row pl-section-outflows">
+      <td class="row-label-col">Total Outflows</td>
+      ${data.outflowsTotal.map(v => cell(v, 'neg')).join('')}
+      ${cellTotal(sum(data.outflowsTotal), 'neg')}
+    </tr>
+    ${PROJECT_ORDER.map(p => {
+      const isExpanded = state.cashPLExpanded.has(p);
+      const subMap = data.outflowsBySubByProject[p];
+      const hasSubs = subMap.size > 0;
+      const projTotal = sum(data.outflowsByProject[p]);
+
+      const subRowsHtml = isExpanded && hasSubs
+        ? Array.from(subMap.entries())
+            .sort((a, b) => sum(b[1]) - sum(a[1]))
+            .map(([subName, vals]) => `
+              <tr class="pl-sub-row">
+                <td class="row-label-col">
+                  <span class="sub-indent"></span>
+                  <span class="sub-label">${escapeHtml(subName)}</span>
+                </td>
+                ${vals.map(v => cell(v)).join('')}
+                ${cellTotal(sum(vals))}
+              </tr>
+            `).join('')
+        : '';
+
+      return `
+        <tr class="pl-detail-row ${hasSubs ? 'pl-expandable' : ''}" ${hasSubs ? `data-project="${p}"` : ''}>
+          <td class="row-label-col">
+            ${hasSubs
+              ? `<span class="expand-toggle${isExpanded ? ' open' : ''}">▶</span>`
+              : '<span class="indent"></span>'}
+            <span class="badge ${p.toLowerCase()}">${p}</span>
+          </td>
+          ${data.outflowsByProject[p].map(v => cell(v)).join('')}
+          ${cellTotal(projTotal)}
+        </tr>
+        ${subRowsHtml}
+      `;
+    }).join('')}
+  `;
+
+  const netByMonth = monthKeys.map((_, i) => data.inflowsTotal[i] - data.outflowsTotal[i]);
+  const netTotal = sum(netByMonth);
+  const netRow = `
+    <tr class="pl-section-row pl-section-net">
+      <td class="row-label-col">Net Cash Flow</td>
+      ${netByMonth.map(v => {
+        const cls = v > 0 ? 'pl-net-pos' : v < 0 ? 'pl-net-neg' : '';
+        return `<td class="numeric ${cls}" title="${formatAED(v)}">${v === 0 ? '—' : formatAEDShort(v)}</td>`;
+      }).join('')}
+      <td class="numeric total-col ${netTotal >= 0 ? 'pl-net-pos' : 'pl-net-neg'}">${formatAED(netTotal)}</td>
+    </tr>
+  `;
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table cash-pl">
+        <thead><tr>${headerHtml}</tr></thead>
+        <tbody>
+          ${inflowsRows}
+          ${outflowsRows}
+          ${netRow}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  container.querySelectorAll('.pl-expandable').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const p = tr.getAttribute('data-project');
+      if (state.cashPLExpanded.has(p)) state.cashPLExpanded.delete(p);
+      else state.cashPLExpanded.add(p);
+      renderCashPLTable(rows, container);
+    });
+  });
+}
 function getClosingBalanceBefore(monthKey) {
   // Closing balance from the FULL dataset, last row before this month starts
   const prior = state.rawData.filter(r => r.monthKey < monthKey);
