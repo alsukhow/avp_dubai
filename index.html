@@ -923,6 +923,16 @@ function formatAED(value, opts = {}) {
   }
   return `AED ${sign}${str}`;
 }
+// Compact AED for tight UI spots (donut centers, dense tooltips).
+// Examples: 4,151,541 → "AED 4.2M"; 151,541 → "AED 152K".
+function formatAEDShort(value) {
+  if (value == null || isNaN(value)) return '—';
+  const sign = value < 0 ? '-' : '';
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `AED ${sign}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000)      return `AED ${sign}${Math.round(abs / 1000)}K`;
+  return `AED ${sign}${Math.round(abs)}`;
+}
 function formatNumber(value) {
   if (value == null || isNaN(value)) return '—';
   return value.toLocaleString('en-US');
