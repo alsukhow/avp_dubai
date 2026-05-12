@@ -816,7 +816,35 @@ const CONFIG = {
   COMPANY_NAME: "AVP Sports Academy LLC",
   CURRENCY: "AED"
 };
+// ============================================================
+// COLUMN MAPPING (sheet header → internal field)
+// Add new names to the FRONT of the array. Old names stay as fallback.
+// ============================================================
+const COLS = {
+  date:        ['Value Date'],
+  num:         ['#'],
+  debit:       ['Debit', 'Debit '],          // trailing-space hack absorbed
+  credit:      ['Credit'],
+  runningBal:  ['Running Balance'],
+  category:    ['Category', 'Type', 'Types'], // высокоуровневая (Opex/Capex…)
+  subtype:     ['Types', 'Remarks'],          // гранулярная (Rent/Payroll…)
+  classField:  ['Class'],
+  project:     ['Project'],
+  vendor:      ['Vendor Name'],
+  invoice:     ['Invoice'],
+  comments:    ['Comments'],
+  needsDetail: ['Details needed'],
+  qbStatus:    ['QB Status']
+};
 
+function pick(row, candidates) {
+  for (const name of candidates) {
+    if (Object.prototype.hasOwnProperty.call(row, name) && row[name] != null) {
+      return row[name];
+    }
+  }
+  return null;
+}
 // ============================================================
 // STATE
 // ============================================================
