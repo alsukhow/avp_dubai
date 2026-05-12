@@ -718,6 +718,10 @@ table.data-table {
           <div class="label">Period</div>
           <div class="value" id="meta-period">—</div>
         </div>
+         <div>
+  <span class="label">Reconciliation</span>
+  <span class="value" id="recon-indicator">—</span>
+</div>
       </div>
     </div>
   </header>
@@ -982,7 +986,16 @@ async function loadData() {
     const parsed = parseCSV(csvText);
     if (parsed.length === 0) throw new Error('No transaction rows found in the data source.');
     state.rawData = normalizeData(parsed);
-    if (state.rawData.length === 0) throw new Error('No valid transactions after normalization.');
+if (state.rawData.length === 0) throw new Error('No valid transactions after normalization.');
+
+// Reconcile running balance — store result for header display
+state.recon = reconcileRunningBalance(state.rawData);
+if (!state.recon.ok) {
+  console.warn(
+    `[recon] ${state.recon.mismatches.length} mismatches detected, max diff: AED ${state.recon.maxDiff.toFixed(2)}`
+  );
+  console.table(state.recon.mismatches.slice(0, 20));
+}
     state.monthsAvailable = buildMonthsAvailable(state.rawData);
     state.filters.monthFrom = state.monthsAvailable[0];
     state.filters.monthTo = state.monthsAvailable[state.monthsAvailable.length - 1];
@@ -1334,10 +1347,48 @@ function updateHeaderMeta() {
     document.getElementById('meta-period').textContent = `${from} – ${to}`;
   }
 }
+   const reconEl = document.getElementById('recon-indicator');
+if (reconEl && state.recon) {
+  if (state.recon.ok) {
+    reconEl.innerHTML = '<span style="color:#86efac">● OK</span>';
+    reconEl.title = 'All rows reconcile against Running Balance';
+  } else {
+    reconEl.innerHTML = `<span style="color:#fca5a5">● ${state.recon.mismatches.length} issue${state.recon.mismatches.length > 1 ? 's' : ''}</span>`;
+    reconEl.title = `Max diff: AED ${state.recon.maxDiff.toFixed(2)}. See console for details.`;
+  }
+}
 
 // ============================================================
 // AGGREGATION HELPERS
 // ============================================================
+   // ============================================================
+// RECONCILIATION
+// Checks that recorded Running Balance matches the reconstructed
+// balance from cumulative (credit + debit). Catches data quality
+// issues like deleted/added rows in the source sheet.
+// ============================================================
+function reconcileRunningBalance(data) {
+  if (data.length === 0) return { ok: true, mismatches: [], maxDiff: 0 };
+  const TOL = 0.5; // AED tolerance for rounding
+  // Implied opening = first row's balance minus first row's net amount
+  let expected = data[0].runningBalance - data[0].amount;
+  const mismatches = [];
+  let maxDiff = 0;
+  data.forEach(r => {
+    expected += r.amount;
+    const diff = expected - r.runningBalance;
+    const abs = Math.abs(diff);
+    if (abs > TOL) {
+      mismatches.push({
+        id: r.id, num: r.num, date: r.date,
+        vendor: r.vendor, invoice: r.invoice,
+        expected: expected, recorded: r.runningBalance, diff
+      });
+      if (abs > maxDiff) maxDiff = abs;
+    }
+  });
+  return { ok: mismatches.length === 0, mismatches, maxDiff };
+}
 function sumInflows(rows) {
   return rows.reduce((s, r) => s + r.credit, 0);
 }
