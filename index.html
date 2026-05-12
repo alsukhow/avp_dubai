@@ -1109,38 +1109,31 @@ function normalizeProject(raw) {
 function normalizeData(rows) {
   const out = [];
   rows.forEach((row, idx) => {
-    // Handle the trailing-space "Debit " column header
-    const debitKey = 'Debit' in row ? 'Debit' : ('Debit ' in row ? 'Debit ' : null);
-    const debit = debitKey ? parseAmount(row[debitKey]) : 0;
-    const credit = parseAmount(row['Credit']);
-    const amount = credit + debit; // debit is stored as negative already
+    const debit  = parseAmount(pick(row, COLS.debit));
+    const credit = parseAmount(pick(row, COLS.credit));
+    const amount = credit + debit;
 
-    const date = parseFlexibleDate(row['Value Date']);
-    if (!date) return; // skip rows without a parseable date
+    const date = parseFlexibleDate(pick(row, COLS.date));
+    if (!date) return;
 
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
 
     out.push({
       id: idx,
-      num: parseInt(row['#']) || (idx + 1),
-      date: date,
-      monthKey: monthKey,
-      debit: debit,
-      credit: credit,
-      amount: amount,
-      invoice: row['Invoice'] == null ? '' : String(row['Invoice']).trim(),
-      runningBalance: parseAmount(row['Running Balance']),
-      type: normalizeType(row['Type']),
-      class: row['Class'] == null ? '' : String(row['Class']).trim().toUpperCase(),
-      project: normalizeProject(row['Project']),
-      remarks: row['Remarks'] == null ? '' : String(row['Remarks']).trim(),
-      vendor: row['Vendor Name'] == null ? '' : String(row['Vendor Name']).trim(),
-      comments: row['Comments'] == null ? '' : String(row['Comments']).trim(),
-      detailsNeeded: row['Details needed'] == null ? '' : String(row['Details needed']).trim(),
-      qbStatus: row['QB Status'] == null ? '' : String(row['QB Status']).trim()
+      num: parseInt(pick(row, COLS.num)) || (idx + 1),
+      date, monthKey, debit, credit, amount,
+      runningBalance: parseAmount(pick(row, COLS.runningBal)),
+      type:        normalizeType(pick(row, COLS.category)),  // high-level
+      remarks:     (pick(row, COLS.subtype)   || '').toString().trim(), // granular
+      class:       (pick(row, COLS.classField)|| '').toString().trim().toUpperCase(),
+      project:     normalizeProject(pick(row, COLS.project)),
+      vendor:      (pick(row, COLS.vendor)    || '').toString().trim(),
+      invoice:     (pick(row, COLS.invoice)   || '').toString().trim(),
+      comments:    (pick(row, COLS.comments)  || '').toString().trim(),
+      detailsNeeded:(pick(row, COLS.needsDetail)|| '').toString().trim(),
+      qbStatus:    (pick(row, COLS.qbStatus)  || '').toString().trim()
     });
   });
-  // Sort chronologically (this matters for running balance reconstruction)
   out.sort((a, b) => a.date - b.date || a.num - b.num);
   return out;
 }
