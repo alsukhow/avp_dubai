@@ -484,6 +484,7 @@ table.data-table {
   user-select: none;
 }
 .data-table th.numeric { text-align: right; }
+.data-table td.numeric { white-space: nowrap; }
 .data-table th:hover { color: var(--text); }
 .data-table th.sorted::after {
   content: ''; display: inline-block; margin-left: 6px;
@@ -678,7 +679,7 @@ table.data-table {
   .chart-wrap.tall { height: 320px; }
   .insights-grid { grid-template-columns: 1fr; }
   .section-title { font-size: 20px; }
-  .data-table th, .data-table td { padding: 8px 10px; font-size: 12px; }
+  .data-table th, .data-table td { padding: 8px 8px; font-size: 11px; }
   .table-controls { flex-direction: column; align-items: stretch; }
   .search-input { min-width: unset; }
 }
