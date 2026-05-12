@@ -1059,7 +1059,7 @@ function formatAEDShort(value) {
   const abs = Math.abs(value);
   if (abs >= 1_000_000) return `AED ${sign}${(abs / 1_000_000).toFixed(1)}M`;
   if (abs >= 1000)      return `AED ${sign}${Math.round(abs / 1000)}K`;
-  return `AED ${sign}${Math.round(abs)}`;
+  return `AED ${sign}${(abs / 1000).toFixed(1)}K`;
 }
 function formatNumber(value) {
   if (value == null || isNaN(value)) return '—';
