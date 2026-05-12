@@ -1289,6 +1289,46 @@ function destroyChartsIn(tabId) {
   });
 }
 
+// Chart.js inline plugin: draws label + value text in donut center.
+// Used via options.plugins.centerText = { label, text }.
+const centerTextPlugin = {
+  id: 'centerText',
+  afterDraw(chart) {
+    const opts = chart.options.plugins && chart.options.plugins.centerText;
+    if (!opts || !opts.text) return;
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return;
+
+    const cx = (chartArea.left + chartArea.right) / 2;
+    const cy = (chartArea.top + chartArea.bottom) / 2;
+    const diameter = Math.min(
+      chartArea.right - chartArea.left,
+      chartArea.bottom - chartArea.top
+    );
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Label (small, uppercase, muted)
+    if (opts.label) {
+      const labelSize = Math.max(9, Math.round(diameter / 24));
+      ctx.font = `600 ${labelSize}px 'DM Sans', system-ui, sans-serif`;
+      ctx.fillStyle = '#8A877F';
+      ctx.letterSpacing = '0.06em';
+      ctx.fillText(opts.label.toUpperCase(), cx, cy - diameter / 14);
+    }
+
+    // Value (large, display serif)
+    const valueSize = Math.max(18, Math.round(diameter / 9));
+    ctx.font = `500 ${valueSize}px 'Fraunces', Georgia, serif`;
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillText(opts.text, cx, cy + diameter / 18);
+
+    ctx.restore();
+  }
+};
+   
 function createChart(canvasId, config) {
   if (state.charts[canvasId]) {
     state.charts[canvasId].destroy();
