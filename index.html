@@ -1967,20 +1967,20 @@ function renderCashFlow(rows) {
     </div>
 
     <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">Monthly Summary</div>
-        <div class="panel-sub">Opening · Inflows · Outflows · Net · Closing</div>
-      </div>
-      <div id="monthly-summary-table"></div>
-    </div>
+  <div class="panel-header">
+    <div class="panel-title">Cash P&amp;L by Project <span class="unit-badge">in AED</span></div>
+    <div class="panel-sub">Click any project row under Total Outflows to drill into subcategory detail</div>
+  </div>
+  <div id="cash-pl-table"></div>
+</div>
 
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">Cash P&amp;L by Project <span class="unit-badge">in AED</span></div>
-<div class="panel-sub">Click any project row under Total Outflows to drill into subcategory detail</div>
-      </div>
-      <div id="cash-pl-table"></div>
-    </div>
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">Monthly Summary</div>
+    <div class="panel-sub">Opening · Inflows · Outflows · Net · Closing</div>
+  </div>
+  <div id="monthly-summary-table"></div>
+</div>
   `;
 
   renderRunningBalanceChart('chart-running', rows);
