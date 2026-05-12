@@ -1658,6 +1658,8 @@ function renderOutflowsByRemarkChart(id, rows) {
   // Warm palette for expenses — terracotta, brick, ochre, charcoal
   const palette = ['#991B1B', '#A8431B', '#B45309', '#7C2D12', '#92400E',
                    '#525252', '#4B5563', '#6B7280', '#374151'];
+  const totalOutflows = display.reduce((s, [, v]) => s + v, 0);
+
   createChart(id, {
     type: 'doughnut',
     data: {
@@ -1670,7 +1672,7 @@ function renderOutflowsByRemarkChart(id, rows) {
       }]
     },
     options: {
-      cutout: '62%',
+      cutout: '68%',  // wider cutout to give center text more breathing room
       plugins: {
         legend: { position: 'bottom' },
         tooltip: {
@@ -1681,9 +1683,14 @@ function renderOutflowsByRemarkChart(id, rows) {
               return `${ctx.label}: ${formatAED(ctx.parsed)} (${pct}%)`;
             }
           }
+        },
+        centerText: {
+          label: 'Total Outflows',
+          text: formatAEDShort(totalOutflows)
         }
       }
-    }
+    },
+    plugins: [centerTextPlugin]
   });
 }
 
