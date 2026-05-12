@@ -1031,7 +1031,9 @@ function parseCSV(csvText) {
     throw new Error('Could not find header row containing "Value Date". Make sure the published CSV is from the "Bank Working" sheet.');
   }
 
-  const headers = (rows[headerIdx] || []).map(h => h == null ? '' : String(h).trim());
+  const headers = (rows[headerIdx] || []).map(h => 
+  h == null ? '' : String(h).trim().replace(/\s+/g, ' ')
+);
   const dataRows = [];
   for (let i = headerIdx + 1; i < rows.length; i++) {
     const row = rows[i];
