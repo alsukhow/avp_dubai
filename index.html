@@ -2212,9 +2212,28 @@ function renderVendors(rows) {
     .slice(0, 5).reduce((s, v) => s + Math.abs(v.out), 0);
   const top5Pct = totalOut > 0 ? top5OutShare / totalOut * 100 : 0;
 
-  el.innerHTML = `
+  // Data quality check: missing vendor attribution
+const noVendorRows = rows.filter(r => !r.vendor || r.vendor === '(no vendor)');
+const noVendorIn = sumInflows(noVendorRows);
+const noVendorOut = Math.abs(sumOutflows(noVendorRows));
+const noVendorVolume = noVendorIn + noVendorOut;
+const totalVolume = sumInflows(rows) + Math.abs(sumOutflows(rows));
+const noVendorPct = totalVolume > 0 ? noVendorVolume / totalVolume * 100 : 0;
+
+el.innerHTML = `
     <div class="section-title">Vendors</div>
     <div class="section-sub">${allVendors.length} unique counterparties in selected period</div>
+
+    ${noVendorRows.length > 0 ? `
+      <div class="callout" style="border-left:4px solid var(--warn); background:var(--warn-soft)">
+        <div class="callout-title">⚠ Data quality: ${noVendorRows.length} transactions without vendor name</div>
+        <div class="callout-text">
+          These represent <strong>${formatAED(noVendorVolume)}</strong>
+          (${formatPercent(noVendorPct)} of total volume) and cannot be attributed to a counterparty.
+          Update the source sheet to improve vendor analytics.
+        </div>
+      </div>
+    ` : ''}
 
     <div class="callout">
       <div class="callout-title">Vendor concentration</div>
