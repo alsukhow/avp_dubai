@@ -1516,17 +1516,7 @@ const closingDate = (() => {
 
   const monthKeys = monthsInRange(state.filters.monthFrom, state.filters.monthTo);
   const monthCount = monthKeys.length || 1;
-  const avgIn = inflows / monthCount;
-  const avgOut = outflows / monthCount;
-
-  // Months with positive net
-  const byMonth = groupBy(rows, r => r.monthKey);
-  let posMonths = 0;
-  monthKeys.forEach(mk => {
-    const mr = byMonth.get(mk) || [];
-    if (netFlow(mr) > 0) posMonths++;
-  });
-
+  
   el.innerHTML = `
     <div class="section-title">Overview</div>
     <div class="section-sub">Cash performance across ${monthCount} ${monthCount === 1 ? 'month' : 'months'} · ${formatMonthLabel(state.filters.monthFrom)} → ${formatMonthLabel(state.filters.monthTo)}</div>
@@ -1554,40 +1544,28 @@ const closingDate = (() => {
       </div>
     </div>
 
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Transactions</div>
-        <div class="kpi-value">${formatNumber(rows.length)}</div>
-        <div class="kpi-sub">${(rows.length / monthCount).toFixed(1)} per month avg</div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Monthly Inflows vs Outflows</div>
+        <div class="panel-sub">Bars: gross flows · Line: net</div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Avg Monthly Inflow</div>
-        <div class="kpi-value pos">${formatAED(avgIn)}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Avg Monthly Outflow</div>
-        <div class="kpi-value neg">${formatAED(avgOut)}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Positive-Net Months</div>
-        <div class="kpi-value">${posMonths} <span style="font-size:14px;color:var(--text-muted)">/ ${monthCount}</span></div>
-      </div>
+      <div class="chart-wrap tall"><canvas id="chart-monthly"></canvas></div>
     </div>
 
     <div class="grid-2">
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title">Monthly Inflows vs Outflows</div>
-          <div class="panel-sub">Bars: gross flows · Line: net</div>
+          <div class="panel-title">Outflows by Subcategory</div>
+          <div class="panel-sub">Granular expense buckets</div>
         </div>
-        <div class="chart-wrap tall"><canvas id="chart-monthly"></canvas></div>
+        <div class="chart-wrap tall"><canvas id="chart-outflow-mix"></canvas></div>
       </div>
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title">Outflows by Subcategory</div>
-          <div class="panel-sub">Granular expense buckets (Rent, Payroll, etc.)</div>
+          <div class="panel-title">Outflows by Vendor</div>
+          <div class="panel-sub">Top 10 + aggregated Other</div>
         </div>
-        <div class="chart-wrap tall"><canvas id="chart-outflow-mix"></canvas></div>
+        <div class="chart-wrap tall"><canvas id="chart-outflow-vendors"></canvas></div>
       </div>
     </div>
 
@@ -1597,9 +1575,9 @@ const closingDate = (() => {
 
   renderMonthlyBarChart('chart-monthly', rows, monthKeys);
   renderOutflowsByRemarkChart('chart-outflow-mix', rows);
+  renderOutflowsByVendorChart('chart-outflow-vendors', rows);
   renderOverviewInsights(rows, monthKeys);
 }
-
 function computeClosingBalance() {
   // Closing balance at end of selected period:
   // = last running balance within monthTo (from full data)
