@@ -1401,6 +1401,10 @@ function renderOverview(rows) {
   // Closing balance: last running balance among full unfiltered data within "to" month
   // (more accurate than recomputing from filtered slice)
   const closing = computeClosingBalance();
+const closingDate = (() => {
+  const slice = state.rawData.filter(r => r.monthKey <= state.filters.monthTo);
+  return slice.length ? slice[slice.length - 1].date : null;
+})();
 
   const monthKeys = monthsInRange(state.filters.monthFrom, state.filters.monthTo);
   const monthCount = monthKeys.length || 1;
@@ -1438,7 +1442,7 @@ function renderOverview(rows) {
       <div class="kpi-card accent">
         <div class="kpi-label">Closing Balance</div>
         <div class="kpi-value">${formatAED(closing)}</div>
-        <div class="kpi-sub">as of ${formatDate(state.rawData[state.rawData.length - 1].date)}</div>
+        <div class="kpi-sub">as of ${closingDate ? formatDate(closingDate) : '—'}</div>
       </div>
     </div>
 
