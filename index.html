@@ -55,7 +55,8 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+   
+html, body { overflow-x: hidden; }
 .hidden { display: none !important; }
 
 /* ===== PASSWORD OVERLAY ===== */
@@ -413,6 +414,10 @@ main {
   gap: 16px;
   margin-bottom: 16px;
 }
+   /* Allow grid items to shrink below content width.
+   Without this, a wide table inside a grid cell pushes
+   the whole page wider than the viewport on mobile. */
+.grid-2 > *, .grid-3 > * { min-width: 0; }
 .grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
