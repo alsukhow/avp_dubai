@@ -745,7 +745,7 @@ table.data-table {
         <div class="pill-group" id="filter-projects"></div>
       </div>
       <div class="filter-group">
-        <span class="filter-label">Type</span>
+        <span class="filter-label">Category</span>
         <div class="pill-group" id="filter-types"></div>
       </div>
       <button class="btn-link" id="filter-reset">Reset filters</button>
@@ -1472,8 +1472,8 @@ function renderOverview(rows) {
       </div>
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title">Outflows by Type</div>
-          <div class="panel-sub">By Remarks category</div>
+          <div class="panel-title">Outflows by Subcategory</div>
+          <div class="panel-sub">Granular expense buckets (Rent, Payroll, etc.)</div>
         </div>
         <div class="chart-wrap tall"><canvas id="chart-outflow-mix"></canvas></div>
       </div>
@@ -2026,7 +2026,7 @@ function renderProjectDetail(project, rows, container) {
         <div class="chart-wrap"><canvas id="chart-pd-monthly"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-header"><div class="panel-title">Composition by Type</div></div>
+        <div class="panel-header"><div class="panel-title">Composition by Category</div></div>
         <div class="chart-wrap"><canvas id="chart-pd-types"></canvas></div>
       </div>
     </div>
@@ -2268,7 +2268,7 @@ function renderVendorTable(allVendors) {
     { k: 'net', label: 'Net', cls: 'numeric' },
     { k: 'n', label: 'Tx', cls: 'numeric' },
     { k: 'projects', label: 'Projects', cls: '' },
-    { k: 'types', label: 'Types', cls: '' }
+    { k: 'types', label: 'Categories', cls: '' }
   ];
   const theadHtml = head.map(h => {
     const sorted = state.vendorSort.key === h.k;
@@ -2282,7 +2282,7 @@ function renderVendorTable(allVendors) {
         <div class="subrow-inner">
           <table>
             <thead><tr>
-              <th>Date</th><th>Type</th><th>Project</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th>Invoice</th><th>Remarks</th>
+              <th>Date</th><th>Category</th><th>Project</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th>Invoice</th><th>Subcategory</th>
             </tr></thead>
             <tbody>${v.txs.sort((a,b)=>b.date-a.date).map(t => `
               <tr>
@@ -2482,7 +2482,7 @@ function renderTxTable(rows) {
 }
 
 function exportCSV(rows) {
-  const headers = ['Date','Type','Class','Project','Debit','Credit','Running Balance','Vendor','Invoice','Remarks','Comments'];
+  const headers = ['Date','Category','Class','Project','Debit','Credit','Running Balance','Vendor','Invoice','Subcategory','Comments'];
   const csvLines = [headers.join(',')];
   rows.forEach(r => {
     const cells = [
