@@ -2823,7 +2823,7 @@ function renderTransactions(rows) {
 
     <div class="panel">
       <div class="table-controls">
-        <input type="text" class="search-input" id="tx-search" placeholder="Search vendor, invoice, type, comments…" value="${escapeAttr(state.txSearch)}" />
+        <input type="text" class="search-input" id="tx-search" placeholder="Search vendor, invoice, project, category, subcategory, comments…" value="${escapeAttr(state.txSearch)}" />
         <button class="btn primary" id="tx-export">Export CSV</button>
         <span class="row-count" id="tx-count"></span>
       </div>
@@ -2846,10 +2846,12 @@ function getFilteredTxRows(rows) {
   const q = state.txSearch.trim().toLowerCase();
   if (!q) return rows;
   return rows.filter(r =>
-    (r.vendor && r.vendor.toLowerCase().includes(q)) ||
-    (r.invoice && r.invoice.toLowerCase().includes(q)) ||
-    (r.remarks && r.remarks.toLowerCase().includes(q)) ||
-    (r.comments && r.comments.toLowerCase().includes(q))
+    (r.vendor   && r.vendor.toLowerCase().includes(q))   ||
+    (r.invoice  && r.invoice.toLowerCase().includes(q))  ||
+    (r.remarks  && r.remarks.toLowerCase().includes(q))  ||
+    (r.comments && r.comments.toLowerCase().includes(q)) ||
+    (r.project  && r.project.toLowerCase().includes(q))  ||
+    (r.type     && r.type.toLowerCase().includes(q))
   );
 }
 
