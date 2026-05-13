@@ -727,6 +727,21 @@ table.data-table {
   min-width: 170px;
   text-align: left;
 }
+/* ===== STICKY FIRST COLUMN (universal) ===== */
+.data-table.has-sticky-col tbody td:first-child,
+.data-table.has-sticky-col thead th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.data-table.has-sticky-col thead th:first-child {
+  background: var(--surface-alt);
+  z-index: 2;
+}
+.data-table.has-sticky-col tbody tr:hover td:first-child {
+  background: var(--surface-alt);
+}
 .cash-pl th.row-label-col {
   background: var(--surface-alt);
   z-index: 2;
@@ -2085,9 +2100,9 @@ function renderMonthlySummaryTable(rows, container) {
   }).join('');
   container.innerHTML = `
     <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr>
-          <th>Month</th>
+      <table class="data-table has-sticky-col">
+  <thead><tr>
+    <th>Month</th>
           <th class="numeric">Opening</th>
           <th class="numeric">Inflows</th>
           <th class="numeric">Outflows</th>
@@ -2390,9 +2405,9 @@ function renderProjectsAll(rows, container) {
     </tr>`;
   }).join('');
   document.getElementById('proj-summary-table').innerHTML = `
-    <div class="table-wrap"><table class="data-table">
-      <thead><tr>
-        <th>Project</th>
+    <div class="table-wrap"><table class="data-table has-sticky-col">
+  <thead><tr>
+    <th>Project</th>
         <th class="numeric">Inflows</th>
         <th class="numeric">Outflows</th>
         <th class="numeric">Net</th>
@@ -2639,7 +2654,7 @@ el.innerHTML = `
         <input type="text" class="search-input" id="vendor-search" placeholder="Search vendor name…" value="${escapeAttr(state.vendorSearch)}" />
         <span class="row-count" id="vendor-count"></span>
       </div>
-      <div class="table-wrap"><table class="data-table" id="vendor-table"></table></div>
+      <div class="table-wrap"><table class="data-table has-sticky-col" id="vendor-table"></table></div>
       <div class="pagination" id="vendor-pagination"></div>
     </div>
   `;
@@ -2858,7 +2873,7 @@ function renderTransactions(rows) {
         <button class="btn primary" id="tx-export">Export CSV</button>
         <span class="row-count" id="tx-count"></span>
       </div>
-      <div class="table-wrap"><table class="data-table" id="tx-table"></table></div>
+      <div class="table-wrap"><table class="data-table has-sticky-col" id="tx-table"></table></div>
       <div class="pagination" id="tx-pagination"></div>
     </div>
   `;
