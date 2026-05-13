@@ -1001,6 +1001,7 @@ const state = {
   vendorSearch: '',
   vendorSort: { key: 'absTotal', dir: 'desc' },
   vendorExpanded: null,
+vendorExpandedShowAll: false,
   txPage: 1,
   txPageSize: 25,
   txSearch: '',
@@ -2732,28 +2733,48 @@ function renderVendorTable(allVendors) {
 
   const bodyHtml = pageRows.map((v, i) => {
     const expandedClass = state.vendorExpanded === v.name ? ' style="background:var(--surface-alt)"' : '';
-    const expanded = state.vendorExpanded === v.name ? `
-  <tr class="subrow"><td colspan="${head.length}">
-    <div class="subrow-inner">
-      <table>
-        <thead><tr>
-          <th>Date</th><th>Category</th><th>Project</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th>Subcategory</th><th>Comments</th>
-        </tr></thead>
-        <tbody>${v.txs.sort((a,b)=>b.date-a.date).map(t => `
-          <tr>
-            <td>${formatDate(t.date)}</td>
-            <td>${escapeHtml(t.type)}</td>
-            <td><span class="badge ${t.project.toLowerCase()}">${escapeHtml(t.project)}</span></td>
-            <td class="numeric neg">${t.debit < 0 ? formatAED(t.debit) : ''}</td>
-            <td class="numeric pos">${t.credit > 0 ? formatAED(t.credit) : ''}</td>
-            <td class="muted">${escapeHtml(t.remarks)}</td>
-            <td class="muted">${escapeHtml(t.comments)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
-  </td></tr>
-` : '';
+    const VENDOR_TX_PAGE = 20;
+    let expanded = '';
+    if (state.vendorExpanded === v.name) {
+      const allTxs = [...v.txs].sort((a,b) => b.date - a.date);
+      const displayed = state.vendorExpandedShowAll ? allTxs : allTxs.slice(0, VENDOR_TX_PAGE);
+      const hasMore = !state.vendorExpandedShowAll && allTxs.length > VENDOR_TX_PAGE;
+
+      expanded = `
+        <tr class="subrow"><td colspan="${head.length}">
+          <div class="subrow-inner">
+            <table>
+              <thead><tr>
+                <th>Date</th><th>Category</th><th>Project</th><th class="numeric">Debit</th><th class="numeric">Credit</th><th>Subcategory</th><th>Comments</th>
+              </tr></thead>
+              <tbody>${displayed.map(t => `
+                <tr>
+                  <td>${formatDate(t.date)}</td>
+                  <td>${escapeHtml(t.type)}</td>
+                  <td><span class="badge ${t.project.toLowerCase()}">${escapeHtml(t.project)}</span></td>
+                  <td class="numeric neg">${t.debit < 0 ? formatAED(t.debit) : ''}</td>
+                  <td class="numeric pos">${t.credit > 0 ? formatAED(t.credit) : ''}</td>
+                  <td class="muted">${escapeHtml(t.remarks)}</td>
+                  <td class="muted">${escapeHtml(t.comments)}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+            ${hasMore ? `
+              <div style="text-align:center;padding:10px;border-top:1px solid var(--border)">
+                <button class="btn-link" data-vendor-show-all="${escapeAttr(v.name)}">
+                  Show all ${allTxs.length} transactions
+                </button>
+              </div>
+            ` : ''}
+            ${state.vendorExpandedShowAll && allTxs.length > VENDOR_TX_PAGE ? `
+              <div style="text-align:center;padding:10px;border-top:1px solid var(--border);color:var(--text-muted);font-size:11px">
+                Showing all ${allTxs.length} transactions
+              </div>
+            ` : ''}
+          </div>
+        </td></tr>
+      `;
+    }
     return `
       <tr data-vendor="${escapeAttr(v.name)}"${expandedClass}>
         <td>${escapeHtml(v.name)}</td>
@@ -2789,9 +2810,19 @@ function renderVendorTable(allVendors) {
     tr.onclick = () => {
       const name = tr.getAttribute('data-vendor');
       state.vendorExpanded = state.vendorExpanded === name ? null : name;
+      state.vendorExpandedShowAll = false; // reset on each expand
       renderVendorTable(allVendors);
     };
     tr.style.cursor = 'pointer';
+  });
+
+  // Wire up "Show all" buttons inside expanded rows
+  tbl.querySelectorAll('[data-vendor-show-all]').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();  // don't trigger the row collapse
+      state.vendorExpandedShowAll = true;
+      renderVendorTable(allVendors);
+    };
   });
 
   // Count
