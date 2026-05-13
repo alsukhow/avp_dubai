@@ -2323,12 +2323,19 @@ function renderProjectsAll(rows, container) {
     <div id="ubo-callout-container"></div>
   `;
 
-  // Inflows by project
+  // Inflows / Outflows by project — single-pass O(rows) aggregation
   const projInflows = {};
   const projOutflows = {};
   PROJECT_ORDER.forEach(p => {
-    projInflows[p] = monthKeys.map(mk => sumInflows(rows.filter(r => r.project === p && r.monthKey === mk)));
-    projOutflows[p] = monthKeys.map(mk => Math.abs(sumOutflows(rows.filter(r => r.project === p && r.monthKey === mk))));
+    projInflows[p] = monthKeys.map(() => 0);
+    projOutflows[p] = monthKeys.map(() => 0);
+  });
+  const monthIdx = new Map(monthKeys.map((m, i) => [m, i]));
+  rows.forEach(r => {
+    const i = monthIdx.get(r.monthKey);
+    if (i == null || !projInflows[r.project]) return;
+    if (r.credit > 0) projInflows[r.project][i] += r.credit;
+    if (r.debit < 0)  projOutflows[r.project][i] += Math.abs(r.debit);
   });
 
   createChart('chart-proj-in', {
